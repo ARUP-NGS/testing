@@ -1,0 +1,62 @@
+name: Official Release Deployment
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+' # Matches semantic version tags like 2.7.0, excludes RC tags
+
+jobs:
+  deploy-official-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Needed to get all tags and history
+
+      - name: Verify tag is based on RC
+        id: verify-tag
+        run: |
+          # Get the current tag without refs/tags/ prefix
+          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+          echo "Current tag: $CURRENT_TAG"
+          
+          # Get the commit hash that this tag points to
+          CURRENT_COMMIT=$(git rev-parse $CURRENT_TAG^{})
+          echo "Current tag commit: $CURRENT_COMMIT"
+          
+          # Find all tags that point to the same commit
+          SAME_COMMIT_TAGS=$(git tag --points-at $CURRENT_COMMIT)
+          echo "All tags on the same commit: $SAME_COMMIT_TAGS"
+          
+          # Look for RC tags with the same base version
+          BASE_VERSION=$CURRENT_TAG
+          RC_PATTERN="$BASE_VERSION-rc[0-9]+"
+          
+          # Find RC tags matching our pattern
+          RC_TAGS=$(echo "$SAME_COMMIT_TAGS" | grep -E "$RC_PATTERN" || echo "")
+          echo "Matching RC tags: $RC_TAGS"
+          
+          # Check if we found matching RC tags
+          if [ -n "$RC_TAGS" ]; then
+            # Get the highest RC tag (sorting by RC number)
+            LATEST_RC_TAG=$(echo "$RC_TAGS" | tr ' ' '\n' | sort -V | tail -n 1)
+            echo "Latest RC tag: $LATEST_RC_TAG"
+            
+            echo "is_from_rc=true" >> $GITHUB_OUTPUT
+            echo "rc_tag=$LATEST_RC_TAG" >> $GITHUB_OUTPUT
+            echo "✅ This tag $CURRENT_TAG is based on release candidate $LATEST_RC_TAG"
+          else
+            echo "is_from_rc=false" >> $GITHUB_OUTPUT
+            echo "❌ No matching RC tag found for $CURRENT_TAG"
+          fi
+
+      - name: Deploy official release
+        if: steps.verify-tag.outputs.is_from_rc == 'true'
+        run: |
+          echo "Deploying official release ${{ github.ref_name }} based on RC: ${{ steps.verify-tag.outputs.rc_tag }}"
+
+      - name: Skip deployment
+        if: steps.verify-tag.outputs.is_from_rc != 'true'
+        run: |
+          echo "::warning::This tag ${{ github.ref_name }} was not created from a matching release candidate tag. Deployment skipped."
+          exit 1
