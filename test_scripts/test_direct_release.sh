@@ -40,6 +40,7 @@ do
     WORKFLOW_FOUND=true
     echo "✅ Workflow triggered by our commit!"
     echo "$WORKFLOW_RUNS" | jq -r '"\nWorkflow ID: \(.databaseId)\nStatus: \(.status)\nConclusion: \(.conclusion)"'
+    #echo "$WORKFLOW_RUNS" | jq '.'
     
     # Get the run ID to watch
     RUN_ID=$(echo "$WORKFLOW_RUNS" | jq -r '.databaseId')

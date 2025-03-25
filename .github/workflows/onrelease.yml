@@ -1,12 +1,14 @@
 name: Official Release Deployment
 on:
-  push:
-    tags:
-      - '[0-9]+.[0-9]+.[0-9]+' # Matches semantic version tags like 2.7.0, excludes RC tags
+  release:
+    types: [published]
+    # Only run on full releases, not prereleases or drafts
 
 jobs:
   deploy-official-release:
     runs-on: ubuntu-latest
+    # Skip workflow for prerelease or draft releases
+    if: (!github.event.release.prerelease && !github.event.release.draft)
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -16,8 +18,8 @@ jobs:
       - name: Verify tag is based on RC
         id: verify-tag
         run: |
-          # Get the current tag without refs/tags/ prefix
-          CURRENT_TAG=${GITHUB_REF#refs/tags/}
+          # Get the tag from the release event
+          CURRENT_TAG=${{ github.event.release.tag_name }}
           echo "Current tag: $CURRENT_TAG"
           
           # Get the commit hash that this tag points to
@@ -53,10 +55,10 @@ jobs:
       - name: Deploy official release
         if: steps.verify-tag.outputs.is_from_rc == 'true'
         run: |
-          echo "Deploying official release ${{ github.ref_name }} based on RC: ${{ steps.verify-tag.outputs.rc_tag }}"
+          echo "Deploying official release ${{ github.event.release.tag_name }} based on RC: ${{ steps.verify-tag.outputs.rc_tag }}"
 
       - name: Skip deployment
         if: steps.verify-tag.outputs.is_from_rc != 'true'
         run: |
-          echo "::warning::This tag ${{ github.ref_name }} was not created from a matching release candidate tag. Deployment skipped."
+          echo "::warning::This release ${{ github.event.release.tag_name }} was not created from a matching release candidate tag. Deployment skipped."
           exit 1
