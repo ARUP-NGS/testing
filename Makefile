@@ -11,7 +11,7 @@ test-rc-release:
 # Test a release without RC tag (should fail workflow)
 test-direct-release:
 	@echo "===== Testing direct release without RC tag ====="
-	@./test_scripts/test_direct_release.sh || true
+	@./test_scripts/test_direct_release.sh
 	@echo "✅ Direct release test completed (expected failure in GitHub Actions)"
 
 # Run cleanup to reset repository state
