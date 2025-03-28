@@ -21,7 +21,7 @@ git tag $VERSION
 git push origin $VERSION
 
 # Create GitHub release
-gh release create $VERSION --title "Version ${VERSION} (Test:${RUN_ID})" --notes "Direct release (no RC)"
+gh release create $VERSION --title "Version ${VERSION} (Test:${RUN_ID})" --notes "Direct release (no RC) Test-ID: ${RUN_ID}"
 
 echo "Created direct release ${VERSION} - workflow should fail verification"
 # The Python test will use the commit SHA to validate the workflow outcome

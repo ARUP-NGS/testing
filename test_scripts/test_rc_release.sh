@@ -26,6 +26,6 @@ git push origin $VERSION
 
 # Create GitHub releases
 # Create GitHub releases with the unique ID
-gh release create $RC_VERSION --title "RC ${RC_VERSION} (Test:${RUN_ID})" --notes "Release candidate\nTest-ID: ${RUN_ID}" --prerelease
+gh release create $RC_VERSION --title "RC ${RC_VERSION} (Test:${RUN_ID})" --notes "Release candidate Test-ID: ${RUN_ID}" --prerelease
 
 echo "Created RC release ${RC_VERSION} - now creating final release..."
